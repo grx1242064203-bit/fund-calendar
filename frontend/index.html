@@ -1,0 +1,3200 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>私募产品开放日管理系统</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        
+        .control-panel {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .control-group {
+            margin-bottom: 15px;
+        }
+        
+        .control-group label {
+            display: block;
+            margin-bottom: 6px;
+            color: #495057;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: all 0.2s;
+            background: white;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #4dabf7;
+            box-shadow: 0 0 0 3px rgba(77, 171, 247, 0.1);
+        }
+        
+        button {
+            padding: 10px 20px;
+            background: #339af0;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin: 5px;
+        }
+        
+        button:hover {
+            background: #228be6;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(34, 139, 230, 0.25);
+        }
+        
+        button.secondary {
+            background: #868e96;
+        }
+        
+        button.secondary:hover {
+            background: #6c757d;
+        }
+        
+        button.danger {
+            background: #fa5252;
+        }
+        
+        button.danger:hover {
+            background: #f03e3e;
+        }
+        
+        /* 双日历容器 */
+        .dual-calendar-container {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .calendar-section {
+            margin-bottom: 30px;
+        }
+        
+        .calendar-header {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        
+        .calendar-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #2c3e50;
+            background: linear-gradient(90deg, #4dabf7 0%, #339af0 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .calendar-nav {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        /* 日历表格样式 */
+        .calendar {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+        
+        .calendar th {
+            padding: 12px 8px;
+            background: linear-gradient(135deg, #4dabf7 0%, #339af0 100%);
+            color: white;
+            font-weight: 500;
+            text-align: center;
+            font-size: 14px;
+            border: 1px solid #339af0;
+        }
+        
+        .calendar td {
+            width: 14.28%;
+            min-height: 80px;
+            height: auto;
+            padding: 4px;
+            border: 1px solid #dee2e6;
+            vertical-align: top;
+            background: white;
+            position: relative;
+            font-size: 11px;
+        }
+        
+        .calendar td:hover {
+            background: #f8f9fa;
+        }
+        
+        .date-number {
+            font-weight: 600;
+            margin-bottom: 2px;
+            color: #495057;
+            font-size: 13px;
+        }
+        
+        .holiday {
+            background: #f8f9fa !important;
+        }
+        
+        .holiday .date-number {
+            color: #adb5bd;
+        }
+        
+        /* 产品标签样式 - 匹配示例图 */
+        .product-tag {
+            display: block;
+            padding: 2px 4px;
+            margin: 1px 0;
+            border-radius: 2px;
+            font-size: 10px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            line-height: 1.4;
+            font-weight: 400;
+        }
+        
+        /* 开放日颜色 */
+        .both-open {
+            background: #51cf66;
+            color: white;
+        }
+        
+        .subscribe-open {
+            background: #4dabf7;
+            color: white;
+        }
+        
+        .redeem-open {
+            background: #ffa94d;
+            color: white;
+        }
+        
+        /* 预约期颜色 */
+        .both-period {
+            background: #a5d8ff;
+            color: #1864ab;
+        }
+        
+        .subscribe-period {
+            background: #74c0fc;
+            color: white;
+        }
+        
+        .redeem-period {
+            background: #ffe066;
+            color: #e67700;
+        }
+        
+        /* 图例样式 */
+        .legend-container {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        
+        .legend {
+            display: flex;
+            gap: 20px;
+            padding: 12px 20px;
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: #495057;
+        }
+        
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 2px;
+        }
+        
+        /* 备注区域样式 */
+        .notes-section {
+            background: #fff8e1;
+            border: 1px solid #ffe066;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        
+        .notes-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .notes-title {
+            color: #f59f00;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .notes-content {
+            font-size: 13px;
+            line-height: 1.8;
+            color: #495057;
+        }
+        
+        .notes-edit {
+            display: none;
+        }
+        
+        .notes-content .important {
+            color: #f03e3e;
+            font-weight: 500;
+        }
+        
+        .products-list {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .product-item {
+            background: white;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            border: 1px solid #e9ecef;
+            transition: all 0.2s;
+        }
+        
+        .product-item:hover {
+            border-color: #4dabf7;
+            box-shadow: 0 2px 4px rgba(77, 171, 247, 0.1);
+        }
+        
+        .product-name {
+            font-weight: 500;
+            color: #339af0;
+            font-size: 14px;
+        }
+        
+        .product-dates {
+            color: #6c757d;
+            font-size: 12px;
+            margin-top: 4px;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 2px;
+            margin-bottom: 20px;
+            background: #f1f3f5;
+            border-radius: 8px;
+            padding: 4px;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            background: transparent;
+            border: none;
+            border-radius: 6px;
+            color: #6c757d;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .tab.active {
+            background: white;
+            color: #339af0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+        }
+        
+        .tab:hover:not(.active) {
+            color: #495057;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .date-type-section {
+            background: #f0f8ff;
+            border: 1px solid #a5d8ff;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .date-type-title {
+            font-weight: 500;
+            color: #1864ab;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        
+        .date-input-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .period-input-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-bottom: 8px;
+        }
+        
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+            margin-right: 5px;
+        }
+        
+        /* 导出容器样式 */
+        .export-container {
+            background: white;
+            padding: 40px;
+            position: relative;
+            font-family: -apple-system, BlinkMacSystemFont, 'Microsoft YaHei', sans-serif;
+        }
+        
+        .export-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .export-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 1200px) {
+            .container {
+                padding: 20px;
+            }
+
+            .dual-calendar-container {
+                flex-direction: column;
+            }
+
+            .calendar-nav {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .calendar-nav div {
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                padding: 15px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .tabs {
+                flex-wrap: wrap;
+            }
+
+            .tab {
+                flex: 1;
+                text-align: center;
+                padding: 8px 12px;
+            }
+
+            .control-panel {
+                padding: 15px;
+            }
+
+            .date-input-row,
+            .period-input-row {
+                grid-template-columns: 1fr;
+            }
+
+            .notes-style-panel {
+                grid-template-columns: 1fr;
+            }
+
+            .notes-style-panel div {
+                margin-bottom: 8px;
+            }
+
+            .calendar {
+                font-size: 12px;
+            }
+
+            .calendar th,
+            .calendar td {
+                padding: 4px 2px;
+            }
+
+            .calendar td {
+                min-height: 60px;
+            }
+
+            .legend {
+                gap: 10px;
+                flex-wrap: wrap;
+            }
+
+            .legend-item {
+                font-size: 11px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .calendar-nav {
+                align-items: stretch;
+            }
+
+            .calendar-nav button {
+                padding: 8px 12px;
+                font-size: 14px;
+            }
+
+            #currentMonthDisplay {
+                font-size: 16px;
+                text-align: center;
+                margin: 5px 0;
+            }
+
+            .legend-container {
+                margin: 15px 0;
+            }
+
+            .legend {
+                justify-content: space-around;
+            }
+
+            .export-container {
+                padding: 20px;
+            }
+        }
+
+        /* 登录模态框样式 */
+        .modal {
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.4);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+            width: 90%;
+            max-width: 400px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            padding: 20px 30px 10px;
+            border-bottom: 1px solid #e9ecef;
+            position: relative;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            color: #2c3e50;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .close {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            color: #adb5bd;
+            transition: color 0.2s;
+        }
+
+        .close:hover {
+            color: #495057;
+        }
+
+        .modal-body {
+            padding: 20px 30px 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #495057;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #ced4da;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #4dabf7;
+            box-shadow: 0 0 0 3px rgba(77, 171, 247, 0.1);
+        }
+
+        .login-options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            font-size: 13px;
+            color: #6c757d;
+        }
+
+        .checkbox-label input[type="checkbox"] {
+            margin-right: 8px;
+            width: 16px;
+            height: 16px;
+        }
+
+        .login-options a {
+            color: #4dabf7;
+            text-decoration: none;
+            font-size: 13px;
+        }
+
+        .login-options a:hover {
+            color: #339af0;
+            text-decoration: underline;
+        }
+
+        .login-btn, .register-btn, .reset-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #4dabf7 0%, #339af0 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 12px;
+        }
+
+        .login-btn:hover, .register-btn:hover, .reset-btn:hover {
+            background: linear-gradient(135deg, #339af0 0%, #228be6 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(51, 154, 240, 0.3);
+        }
+
+        .back-login-btn {
+            background: #f8f9fa;
+            color: #495057;
+            border: 1px solid #dee2e6;
+        }
+
+        .back-login-btn:hover {
+            background: #e9ecef;
+            color: #212529;
+        }
+
+        /* 用户信息栏样式 */
+        .user-info {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            border-radius: 12px;
+            padding: 12px 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            z-index: 100;
+        }
+
+        .user-details {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-details #userName {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .user-role {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .user-role.admin {
+            background: #fff5f5;
+            color: #f03e3e;
+        }
+
+        .user-role.user {
+            background: #f0f9ff;
+            color: #1864ab;
+        }
+
+        .logout-btn {
+            padding: 6px 12px;
+            background: #fa5252;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .logout-btn:hover {
+            background: #f03e3e;
+            transform: translateY(-1px);
+        }
+
+        /* 打印样式 */
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+
+            .container {
+                box-shadow: none;
+                padding: 20px;
+            }
+
+            .tabs,
+            .calendar-nav,
+            .control-panel,
+            .products-list,
+            .export-container .legend-container,
+            .export-container .dual-calendar-container .notes-section {
+                display: none !important;
+            }
+
+            .calendar td {
+                min-height: 100px;
+                font-size: 12px;
+            }
+
+            .calendar th {
+                font-size: 14px;
+            }
+
+            .modal, .user-info {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 登录模态框 -->
+    <div id="loginModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🔐 用户登录</h2>
+                <span class="close" onclick="closeLoginModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="login-form">
+                    <div class="form-group">
+                        <label for="loginPhone">手机号：</label>
+                        <input type="tel" id="loginPhone" placeholder="请输入手机号" maxlength="11">
+                    </div>
+                    <div class="form-group">
+                        <label for="loginPassword">密码：</label>
+                        <input type="password" id="loginPassword" placeholder="请输入密码">
+                    </div>
+                    <div class="form-group">
+                        <div class="login-options">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="rememberLogin">
+                                <span class="checkmark"></span>
+                                记住登录状态
+                            </label>
+                            <a href="#" onclick="showForgotPassword()">忘记密码？</a>
+                        </div>
+                    </div>
+                    <button onclick="login()" class="login-btn">登录</button>
+                    <button onclick="showRegister()" class="register-btn">注册账号</button>
+                </div>
+
+                <!-- 注册表单 -->
+                <div id="registerForm" class="register-form" style="display: none;">
+                    <div class="form-group">
+                        <label for="registerPhone">手机号：</label>
+                        <input type="tel" id="registerPhone" placeholder="请输入手机号" maxlength="11">
+                    </div>
+                    <div class="form-group">
+                        <label for="registerPassword">密码：</label>
+                        <input type="password" id="registerPassword" placeholder="请输入密码（至少6位）">
+                    </div>
+                    <div class="form-group">
+                        <label for="registerRealName">真实姓名：</label>
+                        <input type="text" id="registerRealName" placeholder="请输入真实姓名">
+                    </div>
+                    <div class="form-group">
+                        <label for="registerEmail">邮箱：</label>
+                        <input type="email" id="registerEmail" placeholder="请输入邮箱地址">
+                    </div>
+                    <button onclick="register()" class="register-btn">注册</button>
+                    <button onclick="showLogin()" class="back-login-btn">返回登录</button>
+                </div>
+
+                <!-- 忘记密码表单 -->
+                <div id="forgotPasswordForm" class="forgot-password-form" style="display: none;">
+                    <div class="form-group">
+                        <label for="forgotPhone">手机号：</label>
+                        <input type="tel" id="forgotPhone" placeholder="请输入注册手机号" maxlength="11">
+                    </div>
+                    <button onclick="resetPassword()" class="reset-btn">重置密码</button>
+                    <button onclick="showLogin()" class="back-login-btn">返回登录</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 用户信息栏 -->
+    <div id="userInfo" class="user-info" style="display: none;">
+        <div class="user-details">
+            <span id="userName"></span>
+            <span id="userRole" class="user-role"></span>
+        </div>
+        <button onclick="logout()" class="logout-btn">退出登录</button>
+    </div>
+
+    <div class="container" id="mainContainer" style="display: none;">
+        <h1>📊 私募产品开放日管理系统</h1>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('manual')">手动输入</button>
+            <button class="tab" onclick="switchTab('excel')">Excel导入</button>
+            <button class="tab" onclick="switchTab('calendar')">日历视图</button>
+        </div>
+
+        <div id="manualTab" class="tab-content active">
+            <div class="control-panel">
+                <h3>📝 添加产品规则</h3>
+                <div class="control-group">
+                    <label>产品简称</label>
+                    <input type="text" id="productName" placeholder="例如：华凡启明2号">
+                </div>
+
+                <div class="control-group">
+                    <label>🤖 AI规则解析 (豆包AI)</label>
+                    <div class="date-input-row">
+                        <input type="text" id="aiRuleInput" placeholder="请输入开放规则，如：每月第二个周五开放申赎，遇节假日顺延">
+                        <button onclick="parseAIRule()" style="width: auto; padding: 10px 15px;">🔍 解析规则</button>
+                    </div>
+                    <div style="margin-top: 5px; font-size: 12px; color: #6c757d;">
+                        💡 支持自然语言描述，系统将自动识别休市日并正确计算开放日期
+                    </div>
+                    <div style="margin-top: 3px; font-size: 11px; color: #868e96; padding: 4px 8px; background: #fff5f5; border-radius: 3px; border-left: 3px solid #ffcdd2;">
+                        ⚠️ 注意：由于浏览器安全限制，豆包API需要后端代理服务。当前为演示模式，如遇跨域问题请联系管理员配置代理服务。
+                        <div style="margin-top: 5px;">
+                            <button onclick="showFallbackParser()" style="font-size: 10px; padding: 2px 6px; background: #ffa94d; color: white; border: none; border-radius: 3px; cursor: pointer;">使用本地解析备选方案</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="aiParseResult" style="display: none; margin-top: 10px; padding: 10px; background: #f0f8ff; border-radius: 6px; border: 1px solid #a5d8ff;">
+                    <h4 style="color: #1864ab; margin-bottom: 8px;">📋 解析结果</h4>
+                    <div id="parsedDatesList" style="margin-bottom: 10px;"></div>
+                    <button onclick="applyParsedDates()" style="background: #51cf66; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer;">✅ 应用到产品</button>
+                    <button onclick="hideParseResult()" style="background: #868e96; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; margin-left: 5px;">取消</button>
+                </div>
+
+                <!-- 申购/赎回开放日 -->
+                <div class="date-type-section">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="enableBothOpen" checked onchange="toggleDateSection('both')">
+                        <label for="enableBothOpen" class="date-type-title" style="margin-bottom: 0;">申购/赎回开放日</label>
+                    </div>
+                    <div id="bothOpenSection">
+                        <div class="date-input-row">
+                            <input type="text" id="bothOpenRules" placeholder="规则描述：每月15日">
+                            <input type="text" id="bothOpenDates" placeholder="手动日期：2025.3.15,2025.6.15">
+                        </div>
+                        <div class="period-input-row">
+                            <input type="number" id="bothPeriodStart" placeholder="申赎预约开始(前N个交易日)" min="0">
+                            <input type="number" id="bothPeriodEnd" placeholder="申赎预约结束(前N个交易日)" min="0">
+                            <input type="text" id="bothPeriodDates" placeholder="手动预约日期">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 仅申购开放日 -->
+                <div class="date-type-section">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="enableSubscribeOpen" onchange="toggleDateSection('subscribe')">
+                        <label for="enableSubscribeOpen" class="date-type-title" style="margin-bottom: 0;">仅申购开放日</label>
+                    </div>
+                    <div id="subscribeOpenSection" style="display:none;">
+                        <div class="date-input-row">
+                            <input type="text" id="subscribeOpenRules" placeholder="规则描述：每月1日">
+                            <input type="text" id="subscribeOpenDates" placeholder="手动日期：2025.3.1,2025.6.1">
+                        </div>
+                        <div class="period-input-row">
+                            <input type="number" id="subscribePeriodStart" placeholder="申购预约开始(前N个交易日)" min="0">
+                            <input type="number" id="subscribePeriodEnd" placeholder="申购预约结束(前N个交易日)" min="0">
+                            <input type="text" id="subscribePeriodDates" placeholder="手动预约日期">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 仅赎回开放日 -->
+                <div class="date-type-section">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="enableRedeemOpen" onchange="toggleDateSection('redeem')">
+                        <label for="enableRedeemOpen" class="date-type-title" style="margin-bottom: 0;">仅赎回开放日</label>
+                    </div>
+                    <div id="redeemOpenSection" style="display:none;">
+                        <div class="date-input-row">
+                            <input type="text" id="redeemOpenRules" placeholder="规则描述：每月最后一个工作日">
+                            <input type="text" id="redeemOpenDates" placeholder="手动日期：2025.3.31,2025.6.30">
+                        </div>
+                        <div class="period-input-row">
+                            <input type="number" id="redeemPeriodStart" placeholder="赎回预约开始(前N个交易日)" min="0">
+                            <input type="number" id="redeemPeriodEnd" placeholder="赎回预约结束(前N个交易日)" min="0">
+                            <input type="text" id="redeemPeriodDates" placeholder="手动预约日期">
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="addProduct()">➕ 添加产品</button>
+            </div>
+
+            <div class="products-list">
+                <h3>📋 已添加产品列表</h3>
+                <div id="productsList"></div>
+            </div>
+        </div>
+
+        <div id="excelTab" class="tab-content">
+            <div class="control-panel">
+                <h3>📤 Excel批量导入</h3>
+                <input type="file" id="excelFile" accept=".xlsx,.xls">
+                <button onclick="importExcel()">⬆️ 导入Excel数据</button>
+
+                <div id="excelImportStatus" style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 6px; display: none;">
+                    <h4 id="importStatusTitle">导入状态</h4>
+                    <div id="importStatusContent"></div>
+                </div>
+
+                <div style="margin-top: 15px; color: #6c757d; font-size: 13px;">
+                    <p><strong>Excel模板格式说明：</strong></p>
+                    <table style="width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 12px;">
+                        <thead>
+                            <tr style="background: #f1f3f5;">
+                                <th style="padding: 6px; border: 1px solid #dee2e6; text-align: left;">列号</th>
+                                <th style="padding: 6px; border: 1px solid #dee2e6; text-align: left;">列名称</th>
+                                <th style="padding: 6px; border: 1px solid #dee2e6; text-align: left;">数据要求</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="padding: 6px; border: 1px solid #dee2e6;">A</td>
+                                <td style="padding: 6px; border: 1px solid #dee2e6;">产品代码</td>
+                                <td style="padding: 6px; border: 1px solid #dee2e6;">唯一标识，与基金基础信息库一致</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 6px; border: 1px solid #dee2e6;">B</td>
+                                <td style="padding: 6px; border: 1px solid #dee2e6;">产品名称</td>
+                                <td style="padding: 6px; border: 1px solid #dee2e6;">产品全称</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 6px; border: 1px solid #dee2e6;">C</td>
+                                <td style="padding: 6px; border: 1px solid #dee2e6;">申赎开放日</td>
+                                <td style="padding: 6px; border: 1px solid #dee2e6;">多个日期用逗号分隔，格式：YYYY-MM-DD</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 6px; border: 1px solid #dee2e6;">D</td>
+                                <td style="padding: 6px; border: 1px solid #dee2e6;">申购开放日</td>
+                                <td style="padding: 6px; border: 1px solid #dee2e6;">格式同C列</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 6px; border: 1px solid #dee2e6;">E</td>
+                                <td style="padding: 6px; border: 1px solid #dee2e6;">赎回开放日</td>
+                                <td style="padding: 6px; border: 1px solid #dee2e6;">格式同C列</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 6px; border: 1px solid #dee2e6;">F</td>
+                                <td style="padding: 6px; border: 1px solid #dee2e6;">申赎预约期-开始前x天</td>
+                                <td style="padding: 6px; border: 1px solid #dee2e6;">对应申赎开放日的预约开始偏移天数</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 6px; border: 1px solid #dee2e6;">G</td>
+                                <td style="padding: 6px; border: 1px solid #dee2e6;">申赎预约期-结束前x天</td>
+                                <td style="padding: 6px; border: 1px solid #dee2e6;">对应申赎开放日的预约结束偏移天数</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 6px; border: 1px solid #dee2e6;">H</td>
+                                <td style="padding: 6px; border: 1px solid #dee2e6;">申购预约期-开始前x天</td>
+                                <td style="padding: 6px; border: 1px solid #dee2e6;">对应申购开放日的预约开始偏移天数</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 6px; border: 1px solid #dee2e6;">I</td>
+                                <td style="padding: 6px; border: 1px solid #dee2e6;">申购预约期-结束前x天</td>
+                                <td style="padding: 6px; border: 1px solid #dee2e6;">对应申购开放日的预约结束偏移天数</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 6px; border: 1px solid #dee2e6;">J</td>
+                                <td style="padding: 6px; border: 1px solid #dee2e6;">赎回预约期-开始前x天</td>
+                                <td style="padding: 6px; border: 1px solid #dee2e6;">对应赎回开放日的预约开始偏移天数</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 6px; border: 1px solid #dee2e6;">K</td>
+                                <td style="padding: 6px; border: 1px solid #dee2e6;">赎回预约期-结束前x天</td>
+                                <td style="padding: 6px; border: 1px solid #dee2e6;">对应赎回开放日的预约结束偏移天数</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 6px; border: 1px solid #dee2e6;">L</td>
+                                <td style="padding: 6px; border: 1px solid #dee2e6;">手动申赎预约期</td>
+                                <td style="padding: 6px; border: 1px solid #dee2e6;">格式：YYYY-MM-DD至YYYY-MM-DD</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 6px; border: 1px solid #dee2e6;">M</td>
+                                <td style="padding: 6px; border: 1px solid #dee2e6;">手动申购预约期</td>
+                                <td style="padding: 6px; border: 1px solid #dee2e6;">格式同L列</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 6px; border: 1px solid #dee2e6;">N</td>
+                                <td style="padding: 6px; border: 1px solid #dee2e6;">手动赎回预约期</td>
+                                <td style="padding: 6px; border: 1px solid #dee2e6;">格式同L列</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p style="margin-top: 8px; color: #fa5252; font-size: 11px;">
+                        <strong>重要提示：</strong>所有开放日和预约期日期必须是非休市日，系统会自动校验并提示错误。
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div id="calendarTab" class="tab-content">
+            <div class="calendar-nav">
+                <button onclick="previousMonth()">◀ 上月</button>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <select id="yearSelect" onchange="changeYear()" style="padding: 6px 10px; border: 1px solid #ced4da; border-radius: 4px; font-size: 16px; font-weight: 600;">
+                        <option value="2024">2024年</option>
+                        <option value="2025" selected>2025年</option>
+                        <option value="2026">2026年</option>
+                    </select>
+                    <span id="currentMonthDisplay" style="font-size: 18px; font-weight: 600; color: #2c3e50; min-width: 100px; text-align: center;">10月</span>
+                </div>
+                <button onclick="nextMonth()">下月 ▶</button>
+            </div>
+
+            <div class="dual-calendar-container">
+                <!-- 申赎预约期日历 -->
+                <div class="calendar-section">
+                    <div class="calendar-header">
+                        <div class="calendar-title" id="periodCalendarTitle">2025年10月 私募产品申赎日</div>
+                    </div>
+                    <div id="periodCalendarView"></div>
+                </div>
+
+                <!-- 备注区域 -->
+                <div class="notes-section">
+                    <div class="notes-header">
+                        <span class="notes-title">✓ 重要提醒</span>
+                        <button onclick="toggleNotesEdit()" class="secondary" style="padding: 5px 10px; font-size: 12px;">编辑</button>
+                    </div>
+                    <div class="notes-content" id="notesDisplay">
+                        <p>1. 申购赎回4号提收客机产品，随时直接预约临时开放赎回（<span class="important">提前一天预约</span>）</p>
+                        <p>2. 京华宝基金产品可按客户需求暂发行募集新产品</p>
+                        <p>3. 产品申购赎回认购赎回预约日均需，<span class="important">开放日如下表</span></p>
+                        <p style="margin-top: 8px; color: #868e96; font-size: 12px;">产品标注：（申）"即代表当天该产品只可预约申购不可赎回；标注"（赎）"即代表当天该产品只可赎回不可申购。未标注即代表当天可申购与赎回。</p>
+                    </div>
+                    <div class="notes-edit" id="notesEdit">
+                        <!-- 样式控制面板 -->
+                        <div class="notes-style-panel" style="margin-bottom: 10px; padding: 10px; background: #f8f9fa; border-radius: 6px; border: 1px solid #e9ecef;">
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 10px;">
+                                <div>
+                                    <label style="display: block; margin-bottom: 4px; font-size: 12px; color: #495057;">字体大小：</label>
+                                    <select id="fontSizeSelect" style="width: 100%; padding: 4px; border: 1px solid #ced4da; border-radius: 3px; font-size: 12px;">
+                                        <option value="12px">小 (12px)</option>
+                                        <option value="13px" selected>默认 (13px)</option>
+                                        <option value="14px">中 (14px)</option>
+                                        <option value="16px">大 (16px)</option>
+                                        <option value="18px">特大 (18px)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label style="display: block; margin-bottom: 4px; font-size: 12px; color: #495057;">文字颜色：</label>
+                                    <select id="fontColorSelect" style="width: 100%; padding: 4px; border: 1px solid #ced4da; border-radius: 3px; font-size: 12px;">
+                                        <option value="#495057" selected>默认 (黑色)</option>
+                                        <option value="#f03e3e">红色</option>
+                                        <option value="#e67700">橙色</option>
+                                        <option value="#1864ab">蓝色</option>
+                                        <option value="#51cf66">绿色</option>
+                                        <option value="#868e96">灰色</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label style="display: block; margin-bottom: 4px; font-size: 12px; color: #495057;">背景颜色：</label>
+                                    <select id="bgColorSelect" style="width: 100%; padding: 4px; border: 1px solid #ced4da; border-radius: 3px; font-size: 12px;">
+                                        <option value="transparent" selected>透明</option>
+                                        <option value="#fff5f5">浅红</option>
+                                        <option value="#fff8e1">浅黄</option>
+                                        <option value="#f0f9ff">浅蓝</option>
+                                        <option value="#f0fff4">浅绿</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 5px; margin-bottom: 10px;">
+                                <button onclick="applyStyle('bold')" style="padding: 4px 8px; font-size: 11px; background: #f1f3f5; border: 1px solid #ced4da; border-radius: 3px; cursor: pointer;" title="粗体">𝐁</button>
+                                <button onclick="applyStyle('italic')" style="padding: 4px 8px; font-size: 11px; background: #f1f3f5; border: 1px solid #ced4da; border-radius: 3px; cursor: pointer; font-style: italic;" title="斜体">𝐼</button>
+                                <button onclick="applyStyle('underline')" style="padding: 4px 8px; font-size: 11px; background: #f1f3f5; border: 1px solid #ced4da; border-radius: 3px; cursor: pointer; text-decoration: underline;" title="下划线">𝐔</button>
+                                <button onclick="insertHighlight()" style="padding: 4px 8px; font-size: 11px; background: #fff5f5; border: 1px solid #ffcdd2; border-radius: 3px; cursor: pointer; color: #f03e3e;" title="插入红色高亮">高亮</button>
+                            </div>
+                        </div>
+
+                        <textarea id="notesTextarea" rows="6" style="width: 100%; border: 1px solid #ced4da; border-radius: 4px; padding: 8px; font-size: 13px; line-height: 1.6;"></textarea>
+                        <div style="margin-top: 10px; display: flex; justify-content: space-between; align-items: center;">
+                            <div style="font-size: 12px; color: #6c757d;">
+                                提示：选中文字后点击样式按钮可应用格式，或直接在文本中使用HTML标签
+                            </div>
+                            <div>
+                                <button onclick="saveNotes()" style="background: #51cf66; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; margin-right: 5px;">保存</button>
+                                <button onclick="cancelNotesEdit()" class="secondary" style="padding: 6px 12px;">取消</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 开放日日历 -->
+                <div class="calendar-section">
+                    <div class="calendar-header">
+                        <div class="calendar-title" id="openCalendarTitle">2025年10月 私募产品开放日</div>
+                    </div>
+                    <div id="openCalendarView"></div>
+                </div>
+            </div>
+
+            <!-- 图例 -->
+            <div class="legend-container">
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #51cf66;"></div>
+                        <span>可申赎</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #4dabf7;"></div>
+                        <span>可申购</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #ffa94d;"></div>
+                        <span>可赎回</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #f8f9fa; border: 1px solid #dee2e6;"></div>
+                        <span>休市日</span>
+                    </div>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin-top: 20px;">
+                <button onclick="exportImage()">📸 导出为图片</button>
+                <button onclick="exportPDF()">📄 导出PDF</button>
+                <button onclick="exportExcel()">📊 导出Excel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== 认证和API配置 ====================
+        const API_BASE_URL = 'https://your-api-domain.com/api'; // 请替换为实际的后端API地址
+        let currentUser = null;
+        let authToken = null;
+
+        // 检查登录状态
+        function checkAuthStatus() {
+            const token = localStorage.getItem('authToken');
+            const user = localStorage.getItem('currentUser');
+
+            if (token && user) {
+                try {
+                    currentUser = JSON.parse(user);
+                    authToken = token;
+                    showMainApp();
+                    return true;
+                } catch (e) {
+                    console.error('解析用户信息失败:', e);
+                    clearAuthData();
+                }
+            }
+            return false;
+        }
+
+        // 清空认证数据
+        function clearAuthData() {
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('currentUser');
+            currentUser = null;
+            authToken = null;
+        }
+
+        // 显示登录模态框
+        function showLoginModal() {
+            document.getElementById('loginModal').style.display = 'flex';
+            document.getElementById('loginForm').style.display = 'block';
+            document.getElementById('registerForm').style.display = 'none';
+            document.getElementById('forgotPasswordForm').style.display = 'none';
+        }
+
+        // 关闭登录模态框
+        function closeLoginModal() {
+            document.getElementById('loginModal').style.display = 'none';
+            clearLoginForms();
+        }
+
+        // 清空登录表单
+        function clearLoginForms() {
+            document.getElementById('loginPhone').value = '';
+            document.getElementById('loginPassword').value = '';
+            document.getElementById('registerPhone').value = '';
+            document.getElementById('registerPassword').value = '';
+            document.getElementById('registerRealName').value = '';
+            document.getElementById('registerEmail').value = '';
+            document.getElementById('forgotPhone').value = '';
+        }
+
+        // 显示注册表单
+        function showRegister() {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('registerForm').style.display = 'block';
+            document.getElementById('forgotPasswordForm').style.display = 'none';
+        }
+
+        // 显示登录表单
+        function showLogin() {
+            document.getElementById('loginForm').style.display = 'block';
+            document.getElementById('registerForm').style.display = 'none';
+            document.getElementById('forgotPasswordForm').style.display = 'none';
+        }
+
+        // 显示忘记密码表单
+        function showForgotPassword() {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('registerForm').style.display = 'none';
+            document.getElementById('forgotPasswordForm').style.display = 'block';
+        }
+
+        // 用户登录
+        async function login() {
+            const phone = document.getElementById('loginPhone').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            const remember = document.getElementById('rememberLogin').checked;
+
+            if (!phone || !password) {
+                alert('请输入手机号和密码');
+                return;
+            }
+
+            if (!/^1[3-9]\d{9}$/.test(phone)) {
+                alert('请输入正确的手机号');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ phone, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    authToken = data.token;
+                    currentUser = data.user;
+
+                    if (remember) {
+                        localStorage.setItem('authToken', authToken);
+                        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    }
+
+                    closeLoginModal();
+                    showMainApp();
+                } else {
+                    alert(data.error || '登录失败');
+                }
+            } catch (error) {
+                console.error('登录失败:', error);
+                alert('登录失败，请检查网络连接');
+            }
+        }
+
+        // 用户注册
+        async function register() {
+            const phone = document.getElementById('registerPhone').value.trim();
+            const password = document.getElementById('registerPassword').value;
+            const realName = document.getElementById('registerRealName').value.trim();
+            const email = document.getElementById('registerEmail').value.trim();
+
+            if (!phone || !password) {
+                alert('请输入手机号和密码');
+                return;
+            }
+
+            if (!/^1[3-9]\d{9}$/.test(phone)) {
+                alert('请输入正确的手机号');
+                return;
+            }
+
+            if (password.length < 6) {
+                alert('密码至少需要6位');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ phone, password, realName, email })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert('注册成功，请登录');
+                    showLogin();
+                } else {
+                    alert(data.error || '注册失败');
+                }
+            } catch (error) {
+                console.error('注册失败:', error);
+                alert('注册失败，请检查网络连接');
+            }
+        }
+
+        // 重置密码
+        async function resetPassword() {
+            const phone = document.getElementById('forgotPhone').value.trim();
+
+            if (!phone) {
+                alert('请输入手机号');
+                return;
+            }
+
+            if (!/^1[3-9]\d{9}$/.test(phone)) {
+                alert('请输入正确的手机号');
+                return;
+            }
+
+            // 这里应该调用后端的密码重置接口
+            // 由于后端还没有实现密码重置功能，这里先提示联系管理员
+            alert('密码重置功能需要联系管理员，请联系系统管理员重置密码');
+        }
+
+        // 退出登录
+        function logout() {
+            if (confirm('确定要退出登录吗？')) {
+                clearAuthData();
+                closeLoginModal();
+                document.getElementById('mainContainer').style.display = 'none';
+                document.getElementById('userInfo').style.display = 'none';
+                showLoginModal();
+            }
+        }
+
+        // 显示主应用界面
+        function showMainApp() {
+            document.getElementById('mainContainer').style.display = 'block';
+            document.getElementById('userInfo').style.display = 'flex';
+
+            // 更新用户信息显示
+            document.getElementById('userName').textContent = currentUser.realName || currentUser.phone;
+            document.getElementById('userRole').textContent = currentUser.role === 'admin' ? '管理员' : '普通用户';
+            document.getElementById('userRole').className = `user-role ${currentUser.role}`;
+
+            // 根据用户权限显示/隐藏功能
+            updateUIBasedOnPermissions();
+        }
+
+        // 根据用户权限更新界面
+        function updateUIBasedOnPermissions() {
+            const isAdmin = currentUser.role === 'admin';
+
+            // 管理员可以添加产品，普通用户只能查看
+            const addProductBtn = document.querySelector('button[onclick="addProduct()"]');
+            if (addProductBtn) {
+                addProductBtn.style.display = isAdmin ? 'inline-block' : 'none';
+                addProductBtn.textContent = isAdmin ? '➕ 添加产品' : '👁️ 查看产品';
+            }
+
+            // Excel导入功能只有管理员可以使用
+            const excelTab = document.querySelector('.tab:nth-child(2)');
+            if (excelTab) {
+                excelTab.style.display = isAdmin ? 'inline-block' : 'none';
+            }
+
+            // 如果是普通用户，隐藏手动输入标签
+            if (!isAdmin) {
+                const manualTab = document.querySelector('.tab:nth-child(1)');
+                if (manualTab) {
+                    manualTab.style.display = 'none';
+                }
+            }
+        }
+
+        // API请求封装
+        async function apiRequest(endpoint, options = {}) {
+            const url = `${API_BASE_URL}${endpoint}`;
+
+            const defaultOptions = {
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {})
+                }
+            };
+
+            const finalOptions = {
+                ...defaultOptions,
+                ...options,
+                headers: {
+                    ...defaultOptions.headers,
+                    ...options.headers
+                }
+            };
+
+            const response = await fetch(url, finalOptions);
+
+            if (response.status === 401) {
+                // Token过期或无效，重新登录
+                clearAuthData();
+                showLoginModal();
+                throw new Error('认证过期，请重新登录');
+            }
+
+            return response;
+        }
+
+        // ==================== 数据获取和API集成 ====================
+
+        // 获取产品列表（从API）
+        async function loadProducts() {
+            try {
+                const response = await apiRequest('/products');
+                const data = await response.json();
+
+                if (response.ok) {
+                    // 将API数据转换为原有格式
+                    products = data.products.map(apiProduct => ({
+                        name: apiProduct.product_name,
+                        code: apiProduct.product_code,
+                        bothOpen: {
+                            enabled: apiProduct.open_dates?.some(d => d.open_type === 'both') || false,
+                            dates: apiProduct.open_dates?.filter(d => d.open_type === 'both').map(d => ({
+                                year: new Date(d.open_date).getFullYear(),
+                                month: new Date(d.open_date).getMonth() + 1,
+                                day: new Date(d.open_date).getDate()
+                            })) || [],
+                            periodStart: apiProduct.open_dates?.find(d => d.open_type === 'both')?.period_start_days || 0,
+                            periodEnd: apiProduct.open_dates?.find(d => d.open_type === 'both')?.period_end_days || 0
+                        },
+                        subscribeOpen: {
+                            enabled: apiProduct.open_dates?.some(d => d.open_type === 'subscribe') || false,
+                            dates: apiProduct.open_dates?.filter(d => d.open_type === 'subscribe').map(d => ({
+                                year: new Date(d.open_date).getFullYear(),
+                                month: new Date(d.open_date).getMonth() + 1,
+                                day: new Date(d.open_date).getDate()
+                            })) || [],
+                            periodStart: apiProduct.open_dates?.find(d => d.open_type === 'subscribe')?.period_start_days || 0,
+                            periodEnd: apiProduct.open_dates?.find(d => d.open_type === 'subscribe')?.period_end_days || 0
+                        },
+                        redeemOpen: {
+                            enabled: apiProduct.open_dates?.some(d => d.open_type === 'redeem') || false,
+                            dates: apiProduct.open_dates?.filter(d => d.open_type === 'redeem').map(d => ({
+                                year: new Date(d.open_date).getFullYear(),
+                                month: new Date(d.open_date).getMonth() + 1,
+                                day: new Date(d.open_date).getDate()
+                            })) || [],
+                            periodStart: apiProduct.open_dates?.find(d => d.open_type === 'redeem')?.period_start_days || 0,
+                            periodEnd: apiProduct.open_dates?.find(d => d.open_type === 'redeem')?.period_end_days || 0
+                        }
+                    }));
+
+                    updateProductsList();
+                    return true;
+                } else {
+                    console.error('获取产品列表失败:', data.error);
+                    return false;
+                }
+            } catch (error) {
+                console.error('加载产品失败:', error);
+                // 如果API不可用，回退到本地数据
+                addSampleData();
+                return false;
+            }
+        }
+
+        // 保存产品（到API）
+        async function saveProduct(productData) {
+            try {
+                const response = await apiRequest('/products', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        productCode: productData.code,
+                        productName: productData.name,
+                        description: '',
+                        openDates: [
+                            ...(productData.bothOpen.enabled ? [{
+                                openType: 'both',
+                                openDate: productData.bothOpen.dates.map(d => `${d.year}-${String(d.month).padStart(2, '0')}-${String(d.day).padStart(2, '0')}`),
+                                periodStartDays: productData.bothOpen.periodStart,
+                                periodEndDays: productData.bothOpen.periodEnd
+                            }] : []),
+                            ...(productData.subscribeOpen.enabled ? [{
+                                openType: 'subscribe',
+                                openDate: productData.subscribeOpen.dates.map(d => `${d.year}-${String(d.month).padStart(2, '0')}-${String(d.day).padStart(2, '0')}`),
+                                periodStartDays: productData.subscribeOpen.periodStart,
+                                periodEndDays: productData.subscribeOpen.periodEnd
+                            }] : []),
+                            ...(productData.redeemOpen.enabled ? [{
+                                openType: 'redeem',
+                                openDate: productData.redeemOpen.dates.map(d => `${d.year}-${String(d.month).padStart(2, '0')}-${String(d.day).padStart(2, '0')}`),
+                                periodStartDays: productData.redeemOpen.periodStart,
+                                periodEndDays: productData.redeemOpen.periodEnd
+                            }] : [])
+                        ].flat(),
+                        reservationPeriods: [] // 暂时不支持手动预约期
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert('产品保存成功');
+                    await loadProducts(); // 重新加载产品列表
+                    return true;
+                } else {
+                    alert(data.error || '保存失败');
+                    return false;
+                }
+            } catch (error) {
+                console.error('保存产品失败:', error);
+                alert('保存失败，请检查网络连接');
+                return false;
+            }
+        }
+
+        // 获取日历数据（从API）
+        async function loadCalendarData(year, month) {
+            try {
+                const response = await apiRequest(`/calendar/${year}/${month}`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    // 将API数据转换为原有格式
+                    const calendarData = {
+                        holidays: data.holidays || {},
+                        products: {}
+                    };
+
+                    // 转换产品数据格式
+                    Object.keys(data.products || {}).forEach(productCode => {
+                        const apiProduct = data.products[productCode];
+                        calendarData.products[productCode] = {
+                            name: apiProduct.name,
+                            openDates: {},
+                            reservationPeriods: {}
+                        };
+
+                        // 转换开放日期
+                        Object.keys(apiProduct.openDates || {}).forEach(dateKey => {
+                            const openDate = apiProduct.openDates[dateKey];
+                            calendarData.products[productCode].openDates[dateKey] = {
+                                type: openDate.type,
+                                periodStartDays: openDate.periodStartDays,
+                                periodEndDays: openDate.periodEndDays
+                            };
+                        });
+
+                        // 转换预约期
+                        Object.keys(apiProduct.reservationPeriods || {}).forEach(periodKey => {
+                            const period = apiProduct.reservationPeriods[periodKey];
+                            calendarData.products[productCode].reservationPeriods[periodKey] = {
+                                startDate: period.startDate,
+                                endDate: period.endDate,
+                                openType: period.openType
+                            };
+                        });
+                    });
+
+                    return calendarData;
+                } else {
+                    console.error('获取日历数据失败:', data.error);
+                    return null;
+                }
+            } catch (error) {
+                console.error('加载日历数据失败:', error);
+                return null;
+            }
+        }
+
+        // 2025年中国股市休市日（包括周末和节假日）
+        const holidays2025 = {
+            '2025-01': [1, 4, 5, 11, 12, 18, 19, 25, 26, 27, 28, 29, 30, 31],
+            '2025-02': [1, 2, 3, 4, 8, 9, 15, 16, 22, 23],
+            '2025-03': [1, 2, 8, 9, 15, 16, 22, 23, 29, 30],
+            '2025-04': [4, 5, 6, 7, 12, 13, 19, 20, 26, 27],
+            '2025-05': [1, 2, 3, 4, 5, 10, 11, 17, 18, 24, 25, 31],
+            '2025-06': [1, 2, 7, 8, 14, 15, 21, 22, 28, 29],
+            '2025-07': [5, 6, 12, 13, 19, 20, 26, 27],
+            '2025-08': [2, 3, 9, 10, 16, 17, 23, 24, 30, 31],
+            '2025-09': [6, 7, 13, 14, 20, 21, 27, 28],
+            '2025-10': [1, 2, 3, 4, 5, 6, 7, 8, 11, 12, 18, 19, 25, 26],
+            '2025-11': [1, 2, 8, 9, 15, 16, 22, 23, 29, 30],
+            '2025-12': [6, 7, 13, 14, 20, 21, 27, 28]
+        };
+
+        let currentMonth = 10;
+        let currentYear = 2025;
+        let products = [];
+        let editingIndex = -1;
+
+        // 初始化
+        async function init() {
+            // 检查认证状态
+            if (!checkAuthStatus()) {
+                showLoginModal();
+                return;
+            }
+
+            // 加载产品数据
+            const success = await loadProducts();
+            if (!success) {
+                // 如果API不可用，使用本地示例数据
+                addSampleData();
+            }
+
+            renderCalendars();
+            updateMonthDisplay();
+        }
+
+        // 添加示例数据以匹配示例图
+        function addSampleData() {
+            products = [
+                {
+                    name: '华凡3000号',
+                    bothOpen: {
+                        enabled: true,
+                        dates: [{year: 2025, month: 10, day: 9}, {year: 2025, month: 10, day: 15}],
+                        periodStart: 3,
+                        periodEnd: 1
+                    },
+                    subscribeOpen: {enabled: false},
+                    redeemOpen: {enabled: false}
+                },
+                {
+                    name: '华凡启明',
+                    bothOpen: {
+                        enabled: true,
+                        dates: [{year: 2025, month: 10, day: 10}, {year: 2025, month: 10, day: 20}],
+                        periodStart: 2,
+                        periodEnd: 0
+                    },
+                    subscribeOpen: {enabled: false},
+                    redeemOpen: {enabled: false}
+                },
+                {
+                    name: '申毅辉毅5号',
+                    redeemOpen: {
+                        enabled: true,
+                        dates: [{year: 2025, month: 10, day: 15}],
+                        periodStart: 3,
+                        periodEnd: 1
+                    },
+                    subscribeOpen: {enabled: false},
+                    bothOpen: {enabled: false}
+                },
+                {
+                    name: '毕盛高远金安',
+                    subscribeOpen: {
+                        enabled: true,
+                        dates: [{year: 2025, month: 10, day: 21}],
+                        periodStart: 2,
+                        periodEnd: 0
+                    },
+                    redeemOpen: {enabled: false},
+                    bothOpen: {enabled: false}
+                }
+            ];
+            updateProductsList();
+        }
+
+        // 切换日期类型区域显示
+        function toggleDateSection(type) {
+            const checkbox = document.getElementById(`enable${type.charAt(0).toUpperCase() + type.slice(1)}Open`);
+            const section = document.getElementById(`${type}OpenSection`);
+            section.style.display = checkbox.checked ? 'block' : 'none';
+        }
+
+        // 切换标签
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            if (tabName === 'manual') {
+                document.querySelector('.tab:nth-child(1)').classList.add('active');
+                document.getElementById('manualTab').classList.add('active');
+            } else if (tabName === 'excel') {
+                document.querySelector('.tab:nth-child(2)').classList.add('active');
+                document.getElementById('excelTab').classList.add('active');
+            } else if (tabName === 'calendar') {
+                document.querySelector('.tab:nth-child(3)').classList.add('active');
+                document.getElementById('calendarTab').classList.add('active');
+                renderCalendars();
+            }
+        }
+
+        // 判断是否为交易日
+        function isTradingDay(year, month, day) {
+            const monthStr = `${year}-${String(month).padStart(2, '0')}`;
+            return !holidays2025[monthStr] || !holidays2025[monthStr].includes(day);
+        }
+
+        // 获取N个交易日前的日期（预约期开始日期）
+        function getTradingDaysBefore(year, month, day, n) {
+            if (n <= 0) return new Date(year, month - 1, day - 1);
+
+            let date = new Date(year, month - 1, day);
+            let tradingDaysCount = 0;
+
+            while (tradingDaysCount < n) {
+                date.setDate(date.getDate() - 1);
+                if (isTradingDay(date.getFullYear(), date.getMonth() + 1, date.getDate())) {
+                    tradingDaysCount++;
+                }
+            }
+
+            return date;
+        }
+
+        // 获取N个交易日后的日期（预约期结束日期）
+        function getTradingDaysAfter(year, month, day, n) {
+            if (n <= 0) return new Date(year, month - 1, day - 1);
+
+            let date = new Date(year, month - 1, day);
+            let tradingDaysCount = 0;
+
+            while (tradingDaysCount < n) {
+                date.setDate(date.getDate() + 1);
+                if (isTradingDay(date.getFullYear(), date.getMonth() + 1, date.getDate())) {
+                    tradingDaysCount++;
+                }
+            }
+
+            return date;
+        }
+
+        // 计算预约期，考虑休市日顺延
+        function calculateReservationPeriod(openDate, startOffset, endOffset) {
+            const {year, month, day} = openDate;
+
+            if (startOffset <= 0 && endOffset <= 0) {
+                return null;
+            }
+
+            // 计算初始预约期
+            let startDate, endDate;
+
+            if (startOffset > 0) {
+                startDate = getTradingDaysBefore(year, month, day, startOffset);
+            } else {
+                startDate = new Date(year, month - 1, day - 1);
+            }
+
+            if (endOffset > 0) {
+                endDate = getTradingDaysBefore(year, month, day, endOffset);
+            } else {
+                endDate = new Date(year, month - 1, day - 1);
+            }
+
+            // 确保开始日期早于结束日期
+            if (startDate >= endDate) {
+                return null;
+            }
+
+            // 检查预约期内是否有休市日，如果有则顺延整个预约期
+            const adjustedPeriod = adjustReservationPeriodForHolidays(startDate, endDate, startOffset, endOffset);
+
+            return adjustedPeriod;
+        }
+
+        // 调整预约期以避开休市日
+        function adjustReservationPeriodForHolidays(startDate, endDate, originalStartOffset, originalEndOffset) {
+            // 计算预约期的交易日天数
+            const expectedTradingDays = calculateTradingDaysBetween(startDate, endDate);
+
+            // 如果预约期内所有日期都是交易日，返回原预约期
+            if (expectedTradingDays === getDateDiffInDays(endDate, startDate) + 1) {
+                return {start: startDate, end: endDate};
+            }
+
+            // 向前顺延预约期，直到找到不包含休市日的连续交易日期间
+            let currentStart = new Date(startDate);
+            let currentEnd = new Date(endDate);
+
+            // 向前移动预约期
+            const offsetDays = getDateDiffInDays(endDate, startDate) + 1;
+            currentStart.setDate(currentStart.getDate() - offsetDays);
+            currentEnd.setDate(currentEnd.getDate() - offsetDays);
+
+            // 检查新的预约期是否包含休市日
+            let attempts = 0;
+            const maxAttempts = 30; // 最多尝试30天
+
+            while (attempts < maxAttempts) {
+                const tradingDaysInPeriod = calculateTradingDaysBetween(currentStart, currentEnd);
+
+                if (tradingDaysInPeriod === offsetDays) {
+                    // 找到合适的预约期
+                    return {start: currentStart, end: currentEnd};
+                }
+
+                // 继续向前移动
+                currentStart.setDate(currentStart.getDate() - 1);
+                currentEnd.setDate(currentEnd.getDate() - 1);
+                attempts++;
+            }
+
+            // 如果找不到合适的预约期，返回null
+            return null;
+        }
+
+        // 计算两个日期之间的工作日天数
+        function calculateTradingDaysBetween(startDate, endDate) {
+            let count = 0;
+            let current = new Date(startDate);
+
+            while (current <= endDate) {
+                if (isTradingDay(current.getFullYear(), current.getMonth() + 1, current.getDate())) {
+                    count++;
+                }
+                current.setDate(current.getDate() + 1);
+            }
+
+            return count;
+        }
+
+        // 计算两个日期之间的天数差
+        function getDateDiffInDays(date1, date2) {
+            const time1 = date1.getTime();
+            const time2 = date2.getTime();
+            return Math.abs(Math.ceil((time1 - time2) / (1000 * 60 * 60 * 24)));
+        }
+
+        // 解析手动输入的日期
+        function parseManualDates(dateString) {
+            if (!dateString) return [];
+
+            const dates = [];
+            const dateStrs = dateString.split(/[,，]/);
+
+            dateStrs.forEach(dateStr => {
+                const trimmed = dateStr.trim();
+                const match = trimmed.match(/(\d{4})[.\-/](\d{1,2})[.\-/](\d{1,2})/);
+                if (match) {
+                    const year = parseInt(match[1]);
+                    const month = parseInt(match[2]);
+                    const day = parseInt(match[3]);
+
+                    if (year === 2025 && month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+                        dates.push({year, month, day});
+                    }
+                }
+            });
+
+            return dates;
+        }
+
+        // AI规则解析功能 - 使用豆包API
+        let parsedDates = [];
+        let currentParseType = '';
+        const DOUBAO_API_KEY = 'c3d8ead7-8ca3-4e94-ae80-b09f7c4161ad';
+
+        async function parseAIRule() {
+            const ruleText = document.getElementById('aiRuleInput').value.trim();
+            if (!ruleText) {
+                alert('请输入规则描述');
+                return;
+            }
+
+            // 显示加载状态
+            const parseButton = document.querySelector('button[onclick="parseAIRule()"]');
+            const originalText = parseButton.innerHTML;
+            parseButton.innerHTML = '🔄 解析中...';
+            parseButton.disabled = true;
+
+            try {
+                // 调用豆包API
+                const response = await callDoubaoAPI(ruleText);
+
+                if (response.dates && response.dates.length > 0) {
+                    parsedDates = response.dates.map(dateStr => {
+                        const [year, month, day] = dateStr.split('.').map(Number);
+                        return {year, month, day};
+                    });
+                    currentParseType = detectOpenType(ruleText);
+                    showParseResult(response);
+                } else {
+                    alert('无法解析该规则，请检查规则格式或稍后重试');
+                }
+            } catch (error) {
+                console.error('API调用失败:', error);
+                alert('AI解析服务暂时不可用，请稍后重试');
+            } finally {
+                // 恢复按钮状态
+                parseButton.innerHTML = originalText;
+                parseButton.disabled = false;
+            }
+        }
+
+        async function callDoubaoAPI(ruleText) {
+            try {
+                // 注意：由于浏览器跨域限制，实际部署时需要后端代理或使用其他方案
+                // 这里提供一个示例，实际使用时需要配置CORS或使用代理服务器
+
+                const response = await fetch('https://api.doubao.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${DOUBAO_API_KEY}`
+                    },
+                    body: JSON.stringify({
+                        model: 'doubao-lite-4k',
+                        messages: [
+                            {
+                                role: 'system',
+                                content: `你是专业的金融产品开放日期计算助手，需依据2025年中国股市休市日（含周末、节假日），精准计算产品开放日期。2025年各月休市日如下：
+'2025-01': [1, 4, 5, 11, 12, 18, 19, 25, 26, 27, 28, 29, 30, 31]
+'2025-02': [1, 2, 3, 4, 8, 9, 15, 16, 22, 23]
+'2025-03': [1, 2, 8, 9, 15, 16, 22, 23, 29, 30]
+'2025-04': [4, 5, 6, 7, 12, 13, 19, 20, 26, 27]
+'2025-05': [1, 2, 3, 4, 5, 10, 11, 17, 18, 24, 25, 31]
+'2025-06': [1, 2, 7, 8, 14, 15, 21, 22, 28, 29]
+'2025-07': [5, 6, 12, 13, 19, 20, 26, 27]
+'2025-08': [2, 3, 9, 10, 16, 17, 23, 24, 30, 31]
+'2025-09': [6, 7, 13, 14, 20, 21, 27, 28]
+'2025-10': [1, 2, 3, 4, 5, 6, 7, 8, 11, 12, 18, 19, 25, 26]
+'2025-11': [1, 2, 8, 9, 15, 16, 22, 23, 29, 30]
+'2025-12': [6, 7, 13, 14, 20, 21, 27, 28]
+所有开放日期必须为**非休市日**。若规则涉及日期调整（顺延/提前），需严格按"非休市日"推导。
+请返回以下格式的JSON结果：
+{
+  "dates": ["YYYY.MM.DD", ...], // 开放日期数组，格式为'YYYY.MM.DD'
+  "description": "规则解读与日期调整说明（如遇休市如何推导）",
+  "validation": "所有日期均为非休市日（或具体问题说明）"
+}
+要求计算准确、逻辑清晰，解释详尽。`
+                            },
+                            {
+                                role: 'user',
+                                content: `【产品开放规则】：${ruleText}`
+                            }
+                        ],
+                        temperature: 0.3,
+                        max_tokens: 2000
+                    })
+                });
+
+                if (!response.ok) {
+                    if (response.status === 0) {
+                        throw new Error('网络连接失败，请检查网络或稍后重试');
+                    }
+                    throw new Error(`API请求失败: ${response.status} ${response.statusText}`);
+                }
+
+                const data = await response.json();
+
+                if (data.error) {
+                    throw new Error(data.error.message || 'API返回错误');
+                }
+
+                if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+                    throw new Error('API返回格式错误');
+                }
+
+                // 解析AI返回的内容
+                const content = data.choices[0].message.content.trim();
+
+                // 尝试清理内容中的markdown格式
+                const cleanedContent = content.replace(/```json\s*|\s*```/g, '').trim();
+
+                try {
+                    // 尝试直接解析JSON
+                    return JSON.parse(cleanedContent);
+                } catch (e) {
+                    // 如果直接解析失败，尝试提取JSON部分
+                    const jsonMatch = cleanedContent.match(/\{[\s\S]*\}/);
+                    if (jsonMatch) {
+                        return JSON.parse(jsonMatch[0]);
+                    } else {
+                        console.log('AI返回内容:', cleanedContent);
+                        throw new Error('无法解析AI返回的结果，请检查规则描述是否清晰');
+                    }
+                }
+            } catch (error) {
+                if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                    throw new Error('豆包API服务暂时不可用，请稍后重试或联系管理员');
+                }
+                throw error;
+            }
+        }
+
+        // 显示备选解析方案
+        function showFallbackParser() {
+            const ruleText = document.getElementById('aiRuleInput').value.trim();
+            if (!ruleText) {
+                alert('请输入规则描述');
+                return;
+            }
+
+            // 使用简化的本地解析逻辑
+            const parseResult = fallbackParseRuleText(ruleText);
+            if (parseResult.dates.length === 0) {
+                alert('无法解析该规则，请使用更简单的格式，如："每月15日" 或 "每月第二个周五"');
+                return;
+            }
+
+            parsedDates = parseResult.dates;
+            currentParseType = parseResult.type;
+            showFallbackParseResult(parseResult, ruleText);
+        }
+
+        // 备选的本地规则解析（简化版）
+        function fallbackParseRuleText(ruleText) {
+            const result = {
+                type: 'both', // both, subscribe, redeem
+                dates: []
+            };
+
+            // 检测开放类型
+            if (ruleText.includes('申购') && !ruleText.includes('赎回')) {
+                result.type = 'subscribe';
+            } else if (ruleText.includes('赎回') && !ruleText.includes('申购')) {
+                result.type = 'redeem';
+            }
+
+            // 解析简单的规则模式
+            const patterns = [
+                // 每月N日
+                { regex: /每月(\d+)日/g, handler: (match) => handleSimpleMonthlyDay(match, 2025) },
+                // 每月第N个周X
+                { regex: /每月第(\d+)个周([一二三四五六日])/g, handler: (match) => handleSimpleWeekly(match, 2025) },
+                // 每月最后一个周X
+                { regex: /每月最后一个周([一二三四五六日])/g, handler: (match) => handleSimpleLastWeekly(match, 2025) }
+            ];
+
+            for (const pattern of patterns) {
+                let match;
+                pattern.regex.lastIndex = 0;
+
+                while ((match = pattern.regex.exec(ruleText)) !== null) {
+                    const dates = pattern.handler(match);
+                    result.dates.push(...dates);
+
+                    // 去重
+                    result.dates = result.dates.filter((date, index, self) =>
+                        index === self.findIndex(d => d.year === date.year && d.month === date.month && d.day === date.day)
+                    );
+                }
+            }
+
+            // 如果没有匹配到标准模式，尝试解析为具体日期
+            if (result.dates.length === 0) {
+                const manualDates = parseManualDates(ruleText);
+                result.dates = manualDates;
+            }
+
+            return result;
+        }
+
+        function handleSimpleMonthlyDay(match, year) {
+            const day = parseInt(match[1]);
+            const dates = [];
+
+            for (let month = 1; month <= 12; month++) {
+                const daysInMonth = new Date(year, month, 0).getDate();
+                if (day <= daysInMonth) {
+                    let actualDay = day;
+                    while (!isTradingDay(year, month, actualDay) && actualDay <= daysInMonth) {
+                        actualDay++;
+                    }
+
+                    if (actualDay <= daysInMonth) {
+                        dates.push({year, month, day: actualDay});
+                    }
+                }
+            }
+
+            return dates;
+        }
+
+        function handleSimpleWeekly(match, year) {
+            const nth = parseInt(match[1]);
+            const weekday = getWeekdayNumber(match[2]);
+            const dates = [];
+
+            for (let month = 1; month <= 12; month++) {
+                const firstDayOfMonth = new Date(year, month - 1, 1);
+                const firstWeekday = firstDayOfMonth.getDay();
+
+                let targetDay = 1 + (weekday - firstWeekday + 7) % 7 + (nth - 1) * 7;
+
+                const daysInMonth = new Date(year, month, 0).getDate();
+                if (targetDay <= daysInMonth) {
+                    let actualDay = targetDay;
+                    while (!isTradingDay(year, month, actualDay) && actualDay <= daysInMonth) {
+                        actualDay++;
+                    }
+
+                    if (actualDay <= daysInMonth) {
+                        dates.push({year, month, day: actualDay});
+                    }
+                }
+            }
+
+            return dates;
+        }
+
+        function handleSimpleLastWeekly(match, year) {
+            const weekday = getWeekdayNumber(match[1]);
+            const dates = [];
+
+            for (let month = 1; month <= 12; month++) {
+                const daysInMonth = new Date(year, month, 0).getDate();
+
+                let day = daysInMonth;
+                while (day >= 1) {
+                    const date = new Date(year, month - 1, day);
+                    if (date.getDay() === weekday) {
+                        let actualDay = day;
+                        while (!isTradingDay(year, month, actualDay) && actualDay >= 1) {
+                            actualDay--;
+                        }
+
+                        if (actualDay >= 1) {
+                            dates.push({year, month, day: actualDay});
+                        }
+                        break;
+                    }
+                    day--;
+                }
+            }
+
+            return dates;
+        }
+
+        function showFallbackParseResult(parseResult, originalRule) {
+            const resultDiv = document.getElementById('aiParseResult');
+            const datesList = document.getElementById('parsedDatesList');
+
+            let html = `<p><strong>开放类型：</strong>${getTypeName(currentParseType)}</p>`;
+            html += `<p><strong>解析规则：</strong>${originalRule}</p>`;
+            html += `<p><strong>解析模式：</strong>本地备选解析方案</p>`;
+            html += `<p><strong>生成日期：</strong></p><ul>`;
+
+            parsedDates.forEach(date => {
+                const dateStr = `${date.year}-${String(date.month).padStart(2, '0')}-${String(date.day).padStart(2, '0')}`;
+                const isTrading = isTradingDay(date.year, date.month, date.day);
+                html += `<li>${dateStr} ${isTrading ? '✅' : '❌ 非交易日'}</li>`;
+            });
+
+            html += '</ul>';
+            html += `<p style="color: #ffa94d; font-size: 12px; margin-top: 10px;">💡 提示：这是备选的本地解析方案。如需更准确的AI解析，请联系管理员配置豆包API代理服务。</p>`;
+
+            datesList.innerHTML = html;
+            resultDiv.style.display = 'block';
+        }
+
+        function detectOpenType(ruleText) {
+            if (ruleText.includes('申购') && !ruleText.includes('赎回')) {
+                return 'subscribe';
+            } else if (ruleText.includes('赎回') && !ruleText.includes('申购')) {
+                return 'redeem';
+            } else {
+                return 'both';
+            }
+        }
+
+        function showParseResult(parseResult) {
+            const resultDiv = document.getElementById('aiParseResult');
+            const datesList = document.getElementById('parsedDatesList');
+
+            let html = `<p><strong>开放类型：</strong>${getTypeName(currentParseType)}</p>`;
+            html += `<p><strong>规则解读：</strong>${parseResult.description || '无说明'}</p>`;
+            html += `<p><strong>验证结果：</strong>${parseResult.validation || '无验证信息'}</p>`;
+            html += `<p><strong>生成日期：</strong></p><ul>`;
+
+            parsedDates.forEach(date => {
+                const dateStr = `${date.year}-${String(date.month).padStart(2, '0')}-${String(date.day).padStart(2, '0')}`;
+                const isTrading = isTradingDay(date.year, date.month, date.day);
+                html += `<li>${dateStr} ${isTrading ? '✅' : '❌ 非交易日'}</li>`;
+            });
+
+            html += '</ul>';
+            datesList.innerHTML = html;
+            resultDiv.style.display = 'block';
+        }
+
+        function getTypeName(type) {
+            const names = {
+                'both': '申购/赎回',
+                'subscribe': '仅申购',
+                'redeem': '仅赎回'
+            };
+            return names[type] || type;
+        }
+
+        function getWeekdayNumber(chineseWeekday) {
+            const weekdays = {'一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6, '日': 0};
+            return weekdays[chineseWeekday] !== undefined ? weekdays[chineseWeekday] : 1;
+        }
+
+        function applyParsedDates() {
+            if (parsedDates.length === 0) return;
+
+            // 根据解析类型启用对应的复选框和设置日期
+            if (currentParseType === 'both') {
+                document.getElementById('enableBothOpen').checked = true;
+                toggleDateSection('both');
+                document.getElementById('bothOpenDates').value = parsedDates.map(d =>
+                    `${d.year}.${d.month}.${d.day}`
+                ).join(',');
+            } else if (currentParseType === 'subscribe') {
+                document.getElementById('enableSubscribeOpen').checked = true;
+                toggleDateSection('subscribe');
+                document.getElementById('subscribeOpenDates').value = parsedDates.map(d =>
+                    `${d.year}.${d.month}.${d.day}`
+                ).join(',');
+            } else if (currentParseType === 'redeem') {
+                document.getElementById('enableRedeemOpen').checked = true;
+                toggleDateSection('redeem');
+                document.getElementById('redeemOpenDates').value = parsedDates.map(d =>
+                    `${d.year}.${d.month}.${d.day}`
+                ).join(',');
+            }
+
+            hideParseResult();
+        }
+
+        function hideParseResult() {
+            document.getElementById('aiParseResult').style.display = 'none';
+            document.getElementById('aiRuleInput').value = '';
+            parsedDates = [];
+            currentParseType = '';
+        }
+
+        // 添加产品
+        async function addProduct() {
+            const name = document.getElementById('productName').value.trim();
+
+            if (!name) {
+                alert('请填写产品名称');
+                return;
+            }
+
+            // 检查用户权限
+            if (currentUser.role !== 'admin') {
+                alert('只有管理员才能添加产品');
+                return;
+            }
+
+            const product = {
+                name,
+                code: name, // 使用名称作为代码，实际部署时应该有独立的代码字段
+                bothOpen: {
+                    enabled: document.getElementById('enableBothOpen').checked,
+                    manualDates: document.getElementById('bothOpenDates').value,
+                    dates: parseManualDates(document.getElementById('bothOpenDates').value),
+                    periodStart: parseInt(document.getElementById('bothPeriodStart').value) || 0,
+                    periodEnd: parseInt(document.getElementById('bothPeriodEnd').value) || 0
+                },
+                subscribeOpen: {
+                    enabled: document.getElementById('enableSubscribeOpen').checked,
+                    manualDates: document.getElementById('subscribeOpenDates').value,
+                    dates: parseManualDates(document.getElementById('subscribeOpenDates').value),
+                    periodStart: parseInt(document.getElementById('subscribePeriodStart').value) || 0,
+                    periodEnd: parseInt(document.getElementById('subscribePeriodEnd').value) || 0
+                },
+                redeemOpen: {
+                    enabled: document.getElementById('enableRedeemOpen').checked,
+                    manualDates: document.getElementById('redeemOpenDates').value,
+                    dates: parseManualDates(document.getElementById('redeemOpenDates').value),
+                    periodStart: parseInt(document.getElementById('redeemPeriodStart').value) || 0,
+                    periodEnd: parseInt(document.getElementById('redeemPeriodEnd').value) || 0
+                }
+            };
+
+            // 保存到API
+            const success = await saveProduct(product);
+
+            if (success) {
+                if (editingIndex >= 0) {
+                    editingIndex = -1;
+                }
+                clearInputs();
+            }
+        }
+
+        // 清空输入
+        function clearInputs() {
+            document.getElementById('productName').value = '';
+            document.getElementById('bothOpenDates').value = '';
+            document.getElementById('bothPeriodStart').value = '';
+            document.getElementById('bothPeriodEnd').value = '';
+            document.getElementById('subscribeOpenDates').value = '';
+            document.getElementById('subscribePeriodStart').value = '';
+            document.getElementById('subscribePeriodEnd').value = '';
+            document.getElementById('redeemOpenDates').value = '';
+            document.getElementById('redeemPeriodStart').value = '';
+            document.getElementById('redeemPeriodEnd').value = '';
+            editingIndex = -1;
+        }
+
+        // 更新产品列表显示
+        function updateProductsList() {
+            const container = document.getElementById('productsList');
+            container.innerHTML = '';
+            
+            products.forEach((product, index) => {
+                const item = document.createElement('div');
+                item.className = 'product-item';
+                
+                let dateInfo = [];
+                if (product.bothOpen.enabled && product.bothOpen.dates.length > 0) {
+                    dateInfo.push(`申购/赎回: ${product.bothOpen.dates.length}天`);
+                }
+                if (product.subscribeOpen.enabled && product.subscribeOpen.dates.length > 0) {
+                    dateInfo.push(`仅申购: ${product.subscribeOpen.dates.length}天`);
+                }
+                if (product.redeemOpen.enabled && product.redeemOpen.dates.length > 0) {
+                    dateInfo.push(`仅赎回: ${product.redeemOpen.dates.length}天`);
+                }
+                
+                item.innerHTML = `
+                    <div>
+                        <div class="product-name">${product.name}</div>
+                        <div class="product-dates">${dateInfo.join(' | ')}</div>
+                    </div>
+                    <div style="display: flex; gap: 5px;">
+                        <button onclick="deleteProduct(${index})" style="padding: 6px 12px; font-size: 12px;" class="danger">删除</button>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        // 删除产品
+        function deleteProduct(index) {
+            if (confirm(`确定删除产品 "${products[index].name}" 吗？`)) {
+                products.splice(index, 1);
+                updateProductsList();
+                renderCalendars();
+            }
+        }
+
+        // 获取某一天的产品信息（分离预约期和开放日）
+        function getProductsForDay(year, month, day, isPeriodCalendar) {
+            const result = [];
+            const currentDate = new Date(year, month - 1, day);
+            const isTrading = isTradingDay(year, month, day);
+            
+            if (!isTrading) return result;
+            
+            products.forEach(product => {
+                if (isPeriodCalendar) {
+                    // 预约期日历 - 只显示预约期
+                    // 检查申赎预约期
+                    if (product.bothOpen.enabled) {
+                        product.bothOpen.dates.forEach(openDay => {
+                            const period = calculateReservationPeriod(openDay, product.bothOpen.periodStart, product.bothOpen.periodEnd);
+                            if (period && currentDate >= period.start && currentDate <= period.end) {
+                                result.push({
+                                    name: product.name,
+                                    type: 'both-period'
+                                });
+                            }
+                        });
+                    }
+                    
+                    // 检查申购预约期
+                    if (product.subscribeOpen.enabled) {
+                        product.subscribeOpen.dates.forEach(openDay => {
+                            const period = calculateReservationPeriod(openDay, product.subscribeOpen.periodStart, product.subscribeOpen.periodEnd);
+                            if (period && currentDate >= period.start && currentDate <= period.end) {
+                                result.push({
+                                    name: product.name + '(申)',
+                                    type: 'subscribe-period'
+                                });
+                            }
+                        });
+                    }
+
+                    // 检查赎回预约期
+                    if (product.redeemOpen.enabled) {
+                        product.redeemOpen.dates.forEach(openDay => {
+                            const period = calculateReservationPeriod(openDay, product.redeemOpen.periodStart, product.redeemOpen.periodEnd);
+                            if (period && currentDate >= period.start && currentDate <= period.end) {
+                                result.push({
+                                    name: product.name + '(赎)',
+                                    type: 'redeem-period'
+                                });
+                            }
+                        });
+                    }
+                } else {
+                    // 开放日日历 - 只显示开放日
+                    // 检查申购/赎回开放日
+                    if (product.bothOpen.enabled) {
+                        const isOpenDay = product.bothOpen.dates.some(d => 
+                            d.year === year && d.month === month && d.day === day
+                        );
+                        if (isOpenDay) {
+                            result.push({
+                                name: product.name,
+                                type: 'both-open'
+                            });
+                        }
+                    }
+                    
+                    // 检查仅申购开放日
+                    if (product.subscribeOpen.enabled) {
+                        const isOpenDay = product.subscribeOpen.dates.some(d => 
+                            d.year === year && d.month === month && d.day === day
+                        );
+                        if (isOpenDay) {
+                            result.push({
+                                name: product.name + '(申)',
+                                type: 'subscribe-open'
+                            });
+                        }
+                    }
+                    
+                    // 检查仅赎回开放日
+                    if (product.redeemOpen.enabled) {
+                        const isOpenDay = product.redeemOpen.dates.some(d => 
+                            d.year === year && d.month === month && d.day === day
+                        );
+                        if (isOpenDay) {
+                            result.push({
+                                name: product.name + '(赎)',
+                                type: 'redeem-open'
+                            });
+                        }
+                    }
+                }
+            });
+            
+            return result;
+        }
+
+        // 渲染单个日历
+        function renderSingleCalendar(containerId, isPeriodCalendar) {
+            const container = document.getElementById(containerId);
+            const firstDay = new Date(currentYear, currentMonth - 1, 1).getDay();
+            const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+            
+            // 动态计算所需行数
+            const totalCells = firstDay + daysInMonth;
+            const rows = Math.ceil(totalCells / 7);
+            
+            let html = '<table class="calendar">';
+            html += '<tr><th>周日</th><th>周一</th><th>周二</th><th>周三</th><th>周四</th><th>周五</th><th>周六</th></tr>';
+            
+            let date = 1;
+            for (let week = 0; week < rows; week++) {
+                html += '<tr>';
+                for (let day = 0; day < 7; day++) {
+                    if (week === 0 && day < firstDay) {
+                        html += '<td></td>';
+                    } else if (date > daysInMonth) {
+                        html += '<td></td>';
+                    } else {
+                        const isHoliday = !isTradingDay(currentYear, currentMonth, date);
+                        const cellClass = isHoliday ? 'holiday' : '';
+                        const productsForDay = getProductsForDay(currentYear, currentMonth, date, isPeriodCalendar);
+                        
+                        // 根据内容数量动态调整格子高度
+                        const minHeight = Math.max(80, 60 + productsForDay.length * 18);
+                        
+                        html += `<td class="${cellClass}" style="height: ${minHeight}px;">`;
+                        html += `<div class="date-number">${date}</div>`;
+                        
+                        productsForDay.forEach(item => {
+                            html += `<div class="product-tag ${item.type}" title="${item.name}">${item.name}</div>`;
+                        });
+                        
+                        html += '</td>';
+                        date++;
+                    }
+                }
+                html += '</tr>';
+            }
+            
+            html += '</table>';
+            container.innerHTML = html;
+        }
+
+        // 渲染两个日历
+        function renderCalendars() {
+            // 更新标题
+            document.getElementById('periodCalendarTitle').textContent = `${currentYear}年${currentMonth}月 私募产品申赎日`;
+            document.getElementById('openCalendarTitle').textContent = `${currentYear}年${currentMonth}月 私募产品开放日`;
+            
+            // 渲染预约期日历和开放日日历
+            renderSingleCalendar('periodCalendarView', true);
+            renderSingleCalendar('openCalendarView', false);
+        }
+
+        // 更新月份显示
+        function updateMonthDisplay() {
+            document.getElementById('currentMonthDisplay').textContent = `${currentMonth}月`;
+            document.getElementById('yearSelect').value = currentYear.toString();
+
+            // 更新日历标题
+            document.getElementById('periodCalendarTitle').textContent = `${currentYear}年${currentMonth}月 私募产品申赎日`;
+            document.getElementById('openCalendarTitle').textContent = `${currentYear}年${currentMonth}月 私募产品开放日`;
+        }
+
+        // 切换年份
+        function changeYear() {
+            const yearSelect = document.getElementById('yearSelect');
+            currentYear = parseInt(yearSelect.value);
+            updateMonthDisplay();
+            renderCalendars();
+        }
+
+        // 上一月
+        function previousMonth() {
+            currentMonth--;
+            if (currentMonth < 1) {
+                currentMonth = 12;
+                currentYear--;
+                // 更新年份选择器选项
+                updateYearSelectOptions();
+            }
+            updateMonthDisplay();
+            renderCalendars();
+        }
+
+        // 下一月
+        function nextMonth() {
+            currentMonth++;
+            if (currentMonth > 12) {
+                currentMonth = 1;
+                currentYear++;
+                // 更新年份选择器选项
+                updateYearSelectOptions();
+            }
+            updateMonthDisplay();
+            renderCalendars();
+        }
+
+        // 更新年份选择器选项
+        function updateYearSelectOptions() {
+            const yearSelect = document.getElementById('yearSelect');
+            let options = '';
+
+            for (let year = currentYear - 1; year <= currentYear + 1; year++) {
+                options += `<option value="${year}" ${year === currentYear ? 'selected' : ''}>${year}年</option>`;
+            }
+
+            yearSelect.innerHTML = options;
+        }
+
+        // 备注编辑功能
+        function toggleNotesEdit() {
+            const display = document.getElementById('notesDisplay');
+            const edit = document.getElementById('notesEdit');
+            const textarea = document.getElementById('notesTextarea');
+            
+            if (edit.style.display === 'none' || !edit.style.display) {
+                // 进入编辑模式
+                textarea.value = display.innerHTML.replace(/<[^>]*>/g, '\n').replace(/\n+/g, '\n').trim();
+                display.style.display = 'none';
+                edit.style.display = 'block';
+            } else {
+                // 退出编辑模式
+                display.style.display = 'block';
+                edit.style.display = 'none';
+            }
+        }
+
+        function saveNotes() {
+            const textarea = document.getElementById('notesTextarea');
+            const display = document.getElementById('notesDisplay');
+
+            // 获取样式设置
+            const fontSize = document.getElementById('fontSizeSelect').value;
+            const fontColor = document.getElementById('fontColorSelect').value;
+            const bgColor = document.getElementById('bgColorSelect').value;
+
+            // 应用样式到备注区域
+            display.style.fontSize = fontSize;
+            display.style.color = fontColor;
+            if (bgColor !== 'transparent') {
+                display.style.backgroundColor = bgColor;
+            } else {
+                display.style.backgroundColor = 'transparent';
+            }
+
+            // 将文本转换为HTML，保留格式
+            const lines = textarea.value.split('\n');
+            let html = '';
+            lines.forEach(line => {
+                if (line.trim()) {
+                    // 检测需要标红的关键词
+                    line = line.replace(/提前.*?预约/g, '<span class="important">$&</span>');
+                    line = line.replace(/开放日如下表/g, '<span class="important">$&</span>');
+                    html += `<p>${line}</p>`;
+                }
+            });
+
+            display.innerHTML = html;
+            toggleNotesEdit();
+        }
+
+        function cancelNotesEdit() {
+            toggleNotesEdit();
+        }
+
+        // 应用样式到选中的文本
+        function applyStyle(styleType) {
+            const textarea = document.getElementById('notesTextarea');
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const selectedText = textarea.value.substring(start, end);
+
+            if (!selectedText) {
+                alert('请先选择要应用样式的文本');
+                return;
+            }
+
+            let styledText = '';
+            switch (styleType) {
+                case 'bold':
+                    styledText = `<strong>${selectedText}</strong>`;
+                    break;
+                case 'italic':
+                    styledText = `<em>${selectedText}</em>`;
+                    break;
+                case 'underline':
+                    styledText = `<u>${selectedText}</u>`;
+                    break;
+            }
+
+            const beforeText = textarea.value.substring(0, start);
+            const afterText = textarea.value.substring(end);
+            textarea.value = beforeText + styledText + afterText;
+
+            // 重新聚焦并设置光标位置
+            textarea.focus();
+            textarea.setSelectionRange(start + styledText.length, start + styledText.length);
+        }
+
+        // 插入红色高亮文本
+        function insertHighlight() {
+            const textarea = document.getElementById('notesTextarea');
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const selectedText = textarea.value.substring(start, end);
+
+            if (!selectedText) {
+                alert('请先选择要高亮的文本');
+                return;
+            }
+
+            const highlightedText = `<span style="color: #f03e3e; font-weight: 500;">${selectedText}</span>`;
+            const beforeText = textarea.value.substring(0, start);
+            const afterText = textarea.value.substring(end);
+            textarea.value = beforeText + highlightedText + afterText;
+
+            // 重新聚焦
+            textarea.focus();
+        }
+
+        // 导出为图片
+        async function exportImage() {
+            const exportDiv = document.createElement('div');
+            exportDiv.className = 'export-container';
+            exportDiv.innerHTML = `
+                <div class="export-header">
+                    <h2 class="export-title">北京高华证券经纪业务与财富管理部</h2>
+                </div>
+                ${document.querySelector('.dual-calendar-container').innerHTML}
+                ${document.querySelector('.legend-container').innerHTML}
+            `;
+            
+            document.body.appendChild(exportDiv);
+            
+            try {
+                const canvas = await html2canvas(exportDiv, {
+                    backgroundColor: '#ffffff',
+                    scale: 2,
+                    logging: false
+                });
+                
+                const link = document.createElement('a');
+                link.download = `私募产品日历_${currentYear}年${currentMonth}月.png`;
+                link.href = canvas.toDataURL();
+                link.click();
+            } finally {
+                document.body.removeChild(exportDiv);
+            }
+        }
+
+        // 导出为PDF
+        async function exportPDF() {
+            try {
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('p', 'mm', 'a4');
+
+                // 显示加载状态
+                const loadingDiv = document.createElement('div');
+                loadingDiv.id = 'pdf-loading';
+                loadingDiv.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.5);
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    z-index: 10000;
+                    color: white;
+                    font-size: 16px;
+                `;
+                loadingDiv.innerHTML = '<div>正在生成PDF...</div>';
+                document.body.appendChild(loadingDiv);
+
+                // 获取要导出的内容
+                const exportDiv = document.createElement('div');
+                exportDiv.className = 'export-container';
+                exportDiv.style.cssText = `
+                    position: absolute;
+                    left: -9999px;
+                    top: 0;
+                    width: 1120px;
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+                `;
+
+                // 添加标题
+                exportDiv.innerHTML = `
+                    <div style="text-align: center; margin-bottom: 20px; font-size: 18px; font-weight: bold; color: #2c3e50;">
+                        北京高华证券经纪业务与财富管理部
+                    </div>
+                    <div style="text-align: center; margin-bottom: 30px; font-size: 16px; color: #495057;">
+                        ${currentYear}年${currentMonth}月 私募产品开放日历
+                    </div>
+                    ${document.querySelector('.dual-calendar-container').innerHTML}
+                    ${document.querySelector('.legend-container').innerHTML}
+                `;
+
+                document.body.appendChild(exportDiv);
+
+                // 等待内容渲染完成
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                // 使用html2canvas截图
+                const canvas = await html2canvas(exportDiv, {
+                    backgroundColor: '#ffffff',
+                    scale: 2,
+                    logging: false,
+                    width: 1120,
+                    height: exportDiv.scrollHeight
+                });
+
+                // 将canvas转换为图片
+                const imgData = canvas.toDataURL('image/png');
+
+                // 计算PDF尺寸
+                const imgWidth = 210; // A4宽度，单位mm
+                const pageHeight = 295; // A4高度，单位mm
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+                let heightLeft = imgHeight;
+                let position = 0;
+
+                // 添加第一页
+                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+
+                // 添加后续页面
+                while (heightLeft >= 0) {
+                    position = heightLeft - imgHeight;
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                    heightLeft -= pageHeight;
+                }
+
+                // 下载PDF
+                pdf.save(`私募产品日历_${currentYear}年${currentMonth}月.pdf`);
+
+                // 清理
+                document.body.removeChild(exportDiv);
+                document.body.removeChild(loadingDiv);
+
+            } catch (error) {
+                alert(`PDF导出失败: ${error.message}`);
+                // 清理加载状态
+                const loadingDiv = document.getElementById('pdf-loading');
+                if (loadingDiv) {
+                    document.body.removeChild(loadingDiv);
+                }
+            }
+        }
+
+        // Excel导入功能
+        function importExcel() {
+            const fileInput = document.getElementById('excelFile');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert('请选择Excel文件');
+                return;
+            }
+
+            // 显示导入状态
+            showImportStatus('正在处理文件中...', 'info');
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+
+                    if (workbook.SheetNames.length === 0) {
+                        showImportStatus('Excel文件为空', 'error');
+                        return;
+                    }
+
+                    const sheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[sheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, {header: 1});
+
+                    if (jsonData.length === 0) {
+                        showImportStatus('Excel文件没有数据', 'error');
+                        return;
+                    }
+
+                    processExcelData(jsonData);
+                } catch (error) {
+                    showImportStatus(`文件处理失败: ${error.message}`, 'error');
+                }
+            };
+
+            reader.readAsArrayBuffer(file);
+        }
+
+        function processExcelData(data) {
+            const errors = [];
+            const importedProducts = [];
+
+            // 从第二行开始处理数据（跳过表头）
+            for (let i = 1; i < data.length; i++) {
+                const row = data[i];
+                if (!row || row.length === 0) continue;
+
+                const result = processExcelRow(row, i + 1);
+                if (result.error) {
+                    errors.push(result.error);
+                } else if (result.product) {
+                    importedProducts.push(result.product);
+                }
+            }
+
+            // 显示结果
+            showImportResult(errors, importedProducts);
+        }
+
+        function processExcelRow(row, rowNumber) {
+            // 基础校验
+            if (row.length < 2) {
+                return {error: `第${rowNumber}行：数据列数不足`};
+            }
+
+            const productCode = (row[0] || '').toString().trim();
+            const productName = (row[1] || '').toString().trim();
+
+            if (!productName) {
+                return {error: `第${rowNumber}行：产品名称不能为空`};
+            }
+
+            // 解析日期数据
+            const bothOpenDates = parseExcelDates(row[2], rowNumber, '申赎开放日');
+            const subscribeOpenDates = parseExcelDates(row[3], rowNumber, '申购开放日');
+            const redeemOpenDates = parseExcelDates(row[4], rowNumber, '赎回开放日');
+
+            // 校验所有开放日必须是非休市日
+            const allOpenDates = [
+                ...bothOpenDates.map(d => ({date: d, type: '申赎开放日'})),
+                ...subscribeOpenDates.map(d => ({date: d, type: '申购开放日'})),
+                ...redeemOpenDates.map(d => ({date: d, type: '赎回开放日'}))
+            ];
+
+            for (const item of allOpenDates) {
+                if (!isTradingDay(item.date.year, item.date.month, item.date.day)) {
+                    return {error: `第${rowNumber}行：${item.type} ${item.date.year}-${String(item.date.month).padStart(2, '0')}-${String(item.date.day).padStart(2, '0')} 是休市日`};
+                }
+            }
+
+            // 解析预约期数据
+            const bothPeriodStart = parseInt(row[5]) || 0;
+            const bothPeriodEnd = parseInt(row[6]) || 0;
+            const subscribePeriodStart = parseInt(row[7]) || 0;
+            const subscribePeriodEnd = parseInt(row[8]) || 0;
+            const redeemPeriodStart = parseInt(row[9]) || 0;
+            const redeemPeriodEnd = parseInt(row[10]) || 0;
+
+            // 解析手动预约期
+            const manualBothPeriod = parseExcelDateRange(row[11], rowNumber, '手动申赎预约期');
+            const manualSubscribePeriod = parseExcelDateRange(row[12], rowNumber, '手动申购预约期');
+            const manualRedeemPeriod = parseExcelDateRange(row[13], rowNumber, '手动赎回预约期');
+
+            // 创建产品对象
+            const product = {
+                name: productName,
+                code: productCode,
+                bothOpen: {
+                    enabled: bothOpenDates.length > 0,
+                    dates: bothOpenDates,
+                    periodStart: bothPeriodStart,
+                    periodEnd: bothPeriodEnd,
+                    manualPeriod: manualBothPeriod
+                },
+                subscribeOpen: {
+                    enabled: subscribeOpenDates.length > 0,
+                    dates: subscribeOpenDates,
+                    periodStart: subscribePeriodStart,
+                    periodEnd: subscribePeriodEnd,
+                    manualPeriod: manualSubscribePeriod
+                },
+                redeemOpen: {
+                    enabled: redeemOpenDates.length > 0,
+                    dates: redeemOpenDates,
+                    periodStart: redeemPeriodStart,
+                    periodEnd: redeemPeriodEnd,
+                    manualPeriod: manualRedeemPeriod
+                }
+            };
+
+            return {product};
+        }
+
+        function parseExcelDates(dateStr, rowNumber, fieldName) {
+            if (!dateStr) return [];
+
+            const dates = [];
+            const dateStrings = dateStr.toString().split(',');
+
+            for (const ds of dateStrings) {
+                const trimmed = ds.trim();
+                if (!trimmed) continue;
+
+                const match = trimmed.match(/(\d{4})-(\d{2})-(\d{2})/);
+                if (!match) {
+                    throw new Error(`第${rowNumber}行：${fieldName} 格式错误，应为YYYY-MM-DD`);
+                }
+
+                const year = parseInt(match[1]);
+                const month = parseInt(match[2]);
+                const day = parseInt(match[3]);
+
+                if (year !== 2025 || month < 1 || month > 12 || day < 1 || day > 31) {
+                    throw new Error(`第${rowNumber}行：${fieldName} 日期范围无效`);
+                }
+
+                dates.push({year, month, day});
+            }
+
+            return dates;
+        }
+
+        function parseExcelDateRange(dateRangeStr, rowNumber, fieldName) {
+            if (!dateRangeStr) return [];
+
+            const ranges = [];
+            const rangeStrings = dateRangeStr.toString().split(',');
+
+            for (const rs of rangeStrings) {
+                const trimmed = rs.trim();
+                if (!trimmed) continue;
+
+                const match = trimmed.match(/(\d{4}-\d{2}-\d{2})\s*至\s*(\d{4}-\d{2}-\d{2})/);
+                if (!match) {
+                    throw new Error(`第${rowNumber}行：${fieldName} 格式错误，应为YYYY-MM-DD至YYYY-MM-DD`);
+                }
+
+                const startDate = parseExcelDateString(match[1], rowNumber, fieldName + '开始日期');
+                const endDate = parseExcelDateString(match[2], rowNumber, fieldName + '结束日期');
+
+                if (startDate && endDate) {
+                    ranges.push({start: startDate, end: endDate});
+                }
+            }
+
+            return ranges;
+        }
+
+        function parseExcelDateString(dateStr, rowNumber, fieldName) {
+            const match = dateStr.match(/(\d{4})-(\d{2})-(\d{2})/);
+            if (!match) {
+                throw new Error(`第${rowNumber}行：${fieldName} 格式错误，应为YYYY-MM-DD`);
+            }
+
+            const year = parseInt(match[1]);
+            const month = parseInt(match[2]);
+            const day = parseInt(match[3]);
+
+            if (year !== 2025 || month < 1 || month > 12 || day < 1 || day > 31) {
+                throw new Error(`第${rowNumber}行：${fieldName} 日期范围无效`);
+            }
+
+            return {year, month, day};
+        }
+
+        function showImportStatus(message, type) {
+            const statusDiv = document.getElementById('excelImportStatus');
+            const titleEl = document.getElementById('importStatusTitle');
+            const contentEl = document.getElementById('importStatusContent');
+
+            titleEl.textContent = type === 'error' ? '❌ 导入失败' : '📋 导入状态';
+            contentEl.innerHTML = `<p>${message}</p>`;
+            statusDiv.style.display = 'block';
+
+            if (type === 'error') {
+                statusDiv.style.background = '#fff5f5';
+                statusDiv.style.border = '1px solid #ffcdd2';
+            } else {
+                statusDiv.style.background = '#f0f8ff';
+                statusDiv.style.border = '1px solid #a5d8ff';
+            }
+        }
+
+        function showImportResult(errors, importedProducts) {
+            const statusDiv = document.getElementById('excelImportStatus');
+            const titleEl = document.getElementById('importStatusTitle');
+            const contentEl = document.getElementById('importStatusContent');
+
+            let html = '';
+
+            if (errors.length > 0) {
+                html += `<h4 style="color: #f03e3e; margin-bottom: 8px;">❌ 导入错误 (${errors.length}个)</h4>`;
+                html += '<ul style="color: #f03e3e; margin-bottom: 15px;">';
+                errors.forEach(error => {
+                    html += `<li>${error}</li>`;
+                });
+                html += '</ul>';
+            }
+
+            if (importedProducts.length > 0) {
+                html += `<h4 style="color: #51cf66; margin-bottom: 8px;">✅ 成功导入 (${importedProducts.length}个产品)</h4>`;
+                html += '<ul>';
+                importedProducts.forEach(product => {
+                    html += `<li>${product.name}${product.code ? ` (${product.code})` : ''}</li>`;
+                });
+                html += '</ul>';
+
+                // 添加到产品列表
+                importedProducts.forEach(product => {
+                    products.push(product);
+                });
+                updateProductsList();
+                renderCalendars();
+            }
+
+            if (errors.length === 0 && importedProducts.length === 0) {
+                html = '<p>没有找到有效的产品数据</p>';
+            }
+
+            titleEl.textContent = errors.length > 0 ? '⚠️ 导入完成（有错误）' : '✅ 导入完成';
+            contentEl.innerHTML = html;
+
+            if (errors.length > 0) {
+                statusDiv.style.background = '#fff5f5';
+                statusDiv.style.border = '1px solid #ffcdd2';
+            } else {
+                statusDiv.style.background = '#f0f9ff';
+                statusDiv.style.border = '1px solid #a5d8ff';
+            }
+        }
+
+        // 导出Excel
+        function exportExcel() {
+            const periodData = [];
+            const openData = [];
+            const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const isHoliday = !isTradingDay(currentYear, currentMonth, day);
+                const periodProducts = getProductsForDay(currentYear, currentMonth, day, true);
+                const openProducts = getProductsForDay(currentYear, currentMonth, day, false);
+
+                if (periodProducts.length > 0) {
+                    periodData.push({
+                        '日期': `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
+                        '星期': ['日', '一', '二', '三', '四', '五', '六'][new Date(currentYear, currentMonth - 1, day).getDay()],
+                        '产品': periodProducts.map(p => p.name).join(', ')
+                    });
+                }
+
+                if (openProducts.length > 0) {
+                    openData.push({
+                        '日期': `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
+                        '星期': ['日', '一', '二', '三', '四', '五', '六'][new Date(currentYear, currentMonth - 1, day).getDay()],
+                        '产品': openProducts.map(p => p.name).join(', ')
+                    });
+                }
+            }
+
+            if (periodData.length === 0 && openData.length === 0) {
+                alert('当前月份没有开放日数据');
+                return;
+            }
+
+            // 创建工作簿
+            const wb = XLSX.utils.book_new();
+
+            if (periodData.length > 0) {
+                const periodWs = XLSX.utils.json_to_sheet(periodData);
+                XLSX.utils.book_append_sheet(wb, periodWs, '预约期');
+            }
+
+            if (openData.length > 0) {
+                const openWs = XLSX.utils.json_to_sheet(openData);
+                XLSX.utils.book_append_sheet(wb, openWs, '开放日');
+            }
+
+            // 生成文件名并下载
+            const fileName = `私募产品日历_${currentYear}年${currentMonth}月.xlsx`;
+            XLSX.writeFile(wb, fileName);
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            init();
+        });
+    </script>
+</body>
+</html>
