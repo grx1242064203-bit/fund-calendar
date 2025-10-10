@@ -19,7 +19,7 @@ module.exports = {
 
   // 服务器配置
   server: {
-    port: process.env.PORT || 3001,
+    port: process.env.PORT || 4000,
     env: process.env.NODE_ENV || 'production'
   },
 

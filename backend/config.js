@@ -22,13 +22,13 @@ module.exports = {
 
   // 服务器配置
   server: {
-    port: process.env.PORT || 3001,
+    port: process.env.PORT || 4000,
     env: process.env.NODE_ENV || 'production'
   },
 
   // 跨域配置
   cors: {
-    origin: process.env.FRONTEND_URL || 'https://your-frontend-domain.vercel.app',
+    origin: process.env.FRONTEND_URL || true, // 生产环境设置为 true 允许所有域名，或指定具体域名
     credentials: true
   },
 

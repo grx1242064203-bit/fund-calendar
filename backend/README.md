@@ -41,7 +41,7 @@ JWT_SECRET=your-jwt-secret-key-here
 JWT_EXPIRES_IN=7d
 
 # 服务器配置
-PORT=3001
+PORT=4000
 NODE_ENV=production
 
 # 跨域配置

@@ -95,11 +95,11 @@ JWT_SECRET=$(openssl rand -hex 32)
 JWT_EXPIRES_IN=7d
 
 # 服务器配置
-PORT=3001
+PORT=4000
 NODE_ENV=production
 
 # 跨域配置 - 请替换为实际前端域名
-FRONTEND_URL=https://your-frontend.vercel.app
+FRONTEND_URL=https://your-frontend-domain.vercel.app
 
 # 加密配置 - 生产环境请更换为随机字符串
 ENCRYPTION_KEY=$(openssl rand -hex 32)
@@ -233,6 +233,7 @@ log_success "Nginx配置完成"
 # 配置防火墙
 log_info "配置防火墙..."
 sudo ufw allow 80
+sudo ufw allow 4000
 sudo ufw allow 443
 sudo ufw --force enable
 

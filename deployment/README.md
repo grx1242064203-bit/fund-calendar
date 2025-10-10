@@ -64,7 +64,7 @@ mysql -u funduser -p private_fund_calendar < database/schema.sql
 1. **购买阿里云ECS**:
    - 选择合适的地域和规格（建议2核4G以上）
    - 选择Ubuntu 20.04或CentOS 8操作系统
-   - 配置安全组规则：开放80端口（HTTP）和22端口（SSH）
+   - 配置安全组规则：开放80端口（HTTP）、4000端口（后端API）和22端口（SSH）
 
 2. **连接到服务器**:
 ```bash
@@ -244,6 +244,7 @@ systemctl enable nginx
 ```bash
 # 开放端口
 ufw allow 80
+ufw allow 4000
 ufw allow 443
 
 # 启用防火墙
@@ -438,7 +439,7 @@ pm2 start server.js --name "private-fund-backend"
    - 检查防火墙设置
 
 2. **后端服务无法启动**:
-   - 检查端口3001是否被占用: `netstat -tlnp | grep 3001`
+   - 检查端口4000是否被占用: `netstat -tlnp | grep 4000`
    - 检查Node.js和npm版本
    - 查看PM2日志: `pm2 logs`
 
@@ -470,6 +471,7 @@ nslookup your-domain.com
 
 # 测试端口连通性
 telnet your-domain.com 80
+telnet your-domain.com 4000
 ```
 
 ## 8. 安全建议
